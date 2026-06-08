@@ -1,0 +1,38 @@
+# --- secrets ---
+.env
+.env.local
+*.env
+
+# --- session / auth artifacts ---
+*.session.json
+session.json
+.kicktipp-session*
+
+# --- recon output (contains logged-in personal HTML/data) ---
+research/recon/
+
+# --- node ---
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log*
+.npm/
+
+# --- python (reference repos may carry these) ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- os / editor ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# cloned reference repos (have their own .git)
+research/repos/
+
+# playwright MCP session logs (not part of the project)
+.playwright-mcp/

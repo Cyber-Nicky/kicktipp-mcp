@@ -1,0 +1,27 @@
+{
+  "name": "kicktipp-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "ktipp": "dist/ktipp.js", "kicktipp-mcp": "dist/mcp.js" },
+  "scripts": {
+    "build": "tsup",
+    "dev:cli": "tsx src/bin/ktipp.ts",
+    "dev:mcp": "tsx src/bin/mcp.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "cheerio": "^1.0.0",
+    "commander": "^12.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
