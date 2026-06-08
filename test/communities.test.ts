@@ -24,4 +24,8 @@ describe('parseCommunities', () => {
     expect(c).toHaveLength(1);
     expect(c[0]).toEqual({ slug: 'my-community', name: 'My Community' });
   });
+  it('detects a member community from the "Meine Tipprunden" nav dropdown (real meinetipprunden; name != slug)', () => {
+    const c = parseCommunities(fixture('meinetipprunden-member.html'));
+    expect(c).toContainEqual({ slug: 'supertipper', name: 'Super Tipper 2026' });
+  });
 });
