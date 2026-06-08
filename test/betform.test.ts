@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseBetForm } from '../src/scrape/betform.js';
 import { ParseError } from '../src/errors.js';
+import { fixture } from './helpers.js';
 
 // ---------------------------------------------------------------------------
 // Shared fixture helpers
@@ -142,5 +143,19 @@ describe('parseBetForm', () => {
     );
     const f = parseBetForm(html);
     expect(f.matches[0].kickoff).toBe('02.10.2026 20:30');
+  });
+
+  // ── 9. Real-data: the live WM bet form (sanitized member round) ─────────────
+  it('parses the real KickTipp bet form markup (sanitized live fixture)', () => {
+    const f = parseBetForm(fixture('betform-member.html'));
+    expect(f.matches.length).toBeGreaterThanOrEqual(3);
+    const m = f.matches[0];
+    expect(m.homeInputName).toMatch(/^spieltippForms\[\d+\]\.heimTipp$/);
+    expect(m.awayInputName).toMatch(/^spieltippForms\[\d+\]\.gastTipp$/);
+    expect(m.formIndex).toBeGreaterThan(0);
+    expect(m.home.length).toBeGreaterThan(0);
+    expect(m.away.length).toBeGreaterThan(0);
+    expect(m.odds).not.toBeNull(); // this round publishes odds
+    expect(f.fields['spieltagIndex']).toBeDefined(); // hidden field replayed on POST
   });
 });

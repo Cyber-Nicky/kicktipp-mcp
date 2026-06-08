@@ -103,7 +103,14 @@ export class KickTippClient {
       };
     });
     if (o.dryRun) return { submitted: false, diff };
+    // Submit the FULL form like a browser would: echo every match's existing tip so betting on
+    // one match never clears the others. Hidden fields (spieltagIndex, tippAbgegeben flags, …)
+    // are replayed verbatim from form.fields.
     const params: Record<string, string> = { ...form.fields, submitbutton: 'submit' };
+    for (const m of form.matches) {
+      params[m.homeInputName] = m.currentHome != null ? String(m.currentHome) : '';
+      params[m.awayInputName] = m.currentAway != null ? String(m.currentAway) : '';
+    }
     for (const b of o.bets) {
       const m = form.matches.find((x) => x.formIndex === b.matchId);
       if (!m || m.locked) continue;
