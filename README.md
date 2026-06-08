@@ -186,3 +186,8 @@ npm run build         # tsup -> dist/ktipp.js + dist/mcp.js
 npm run dev:cli       # run CLI without building
 npm run dev:mcp       # run MCP server without building
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+

@@ -36,3 +36,9 @@ research/repos/
 
 # playwright MCP session logs (not part of the project)
 .playwright-mcp/
+
+# internal reverse-engineering notes, design docs, and recon tooling
+# (kept locally for development; not part of the published project)
+research/
+docs/
+recon/
