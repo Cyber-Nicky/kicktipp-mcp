@@ -112,7 +112,7 @@ The server exposes the following tools. Claude Code will call `get_status` first
 | `get_rules` | `community` | Scoring rules (exact/goal-diff/tendency points) |
 | `get_tip_distribution` | `community`, `spieltagIndex?` | Crowd tip distribution (Tippverteilung) per match |
 | `predict_matchday` | `community`, `spieltagIndex?` | Expected-points-optimal predictions from odds |
-| `place_bets` | `community`, `bets[]`, `dry_run?`, `spieltagIndex?`, `override?` | Submit tips. DESTRUCTIVE. `dry_run` defaults to `true`. |
+| `place_bets` | `community`, `bets[]`, `dry_run?`, `spieltagIndex?` | Submit tips. DESTRUCTIVE. `dry_run` defaults to `true`. Diff rows carry `status` (`ok`/`locked`/`unknown`); real submits are verified by a form read-back (`verified`). |
 
 ### Example: tip distribution API
 
@@ -158,9 +158,14 @@ Matches without published odds are skipped with a reason.
 
 - No HTTP write is performed.
 - A diff is returned showing the old tip (if any) and the proposed new tip for each match.
-- Locked matches (past the betting deadline) are shown as locked and skipped on real submission.
+- Every diff row carries a `status`: `ok` (will be submitted), `locked` (past the betting deadline — skipped), or `unknown` (matchId not on the bet form — skipped). The dry-run preview therefore shows exactly what a real submission would do.
 
-To actually submit you must pass `--yes` (CLI) or `"dry_run": false` (MCP). Always review the diff before submitting. The server instructions remind Claude Code to dry-run first.
+On a real submission (`--yes` / `"dry_run": false`):
+
+- If no bet has status `ok`, nothing is posted and `submitted` is `false`.
+- After the POST the bet form is **read back** and each submitted tip is compared against the saved state: each `ok` row gets `verified: true/false`, and the top-level `verified` is `true` only if every submitted tip was actually stored. Trust `verified`, not `submitted` — kicktipp answers 200 even when it silently drops a tip.
+
+Always review the diff before submitting. The server instructions remind Claude Code to dry-run first.
 
 ## Multi-account / multi-community
 

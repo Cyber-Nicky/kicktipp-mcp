@@ -164,11 +164,20 @@ export function buildProgram(deps?: { core?: KickTippClient; cfg?: ConfigStore }
         bets,
         dryRun: !o.yes,
       });
+      const tag = (d: (typeof r.diff)[number]) =>
+        d.status === 'unknown' ? ' [unknown matchId — skipped]'
+        : d.status === 'locked' ? ' [locked — skipped]'
+        : d.verified === true ? ' [verified]'
+        : d.verified === false ? ' [NOT SAVED]'
+        : '';
+      const header =
+        `${r.submitted ? 'SUBMITTED' : 'DRY-RUN'}` +
+        (r.verified === true ? ' (all tips verified)' : r.verified === false ? ' — VERIFICATION FAILED' : '');
       out(
         r,
-        `${r.submitted ? 'SUBMITTED' : 'DRY-RUN'}:\n` +
+        `${header}:\n` +
           r.diff
-            .map((d) => `  ${d.matchId}: ${d.from ? `${d.from.home}:${d.from.away}` : '-'} -> ${d.to.home}:${d.to.away}`)
+            .map((d) => `  ${d.matchId}: ${d.from ? `${d.from.home}:${d.from.away}` : '-'} -> ${d.to.home}:${d.to.away}${tag(d)}`)
             .join('\n'),
       );
     });

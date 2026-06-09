@@ -50,6 +50,23 @@ export interface Prediction {
   probs: TendencyProbs; score: Score; expectedPoints: number; rationale: string;
 }
 
+/** Why a requested bet will or will not be applied on submission. */
+export type BetDiffStatus = 'ok' | 'locked' | 'unknown';
+export interface BetDiffEntry {
+  matchId: number;
+  from: Score | null;
+  to: Score;
+  status: BetDiffStatus;
+  /** Read-back result after a real submit ('ok' rows only); absent on dry-run. */
+  verified?: boolean;
+}
+export interface PlaceBetsResult {
+  submitted: boolean;
+  /** null on dry-run or when nothing was applicable; otherwise true iff every applied bet was read back from the saved form. */
+  verified: boolean | null;
+  diff: BetDiffEntry[];
+}
+
 // ── HTTP contract ─────────────────────────────────────────────────────────────
 
 export interface HttpResponse { status: number; finalUrl: string; html: string; }

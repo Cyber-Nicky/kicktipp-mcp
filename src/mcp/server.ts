@@ -18,7 +18,10 @@ export function buildServer(core: KickTippClient) {
     server.tool(name, desc, shape, async (args: any) => {
       try {
         const data = await handler(args);
-        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }], structuredContent: data };
+        // MCP requires structuredContent to be an object; wrap bare arrays.
+        // The text block serializes the same wrapped shape so both views agree.
+        const structured = Array.isArray(data) ? { items: data } : data;
+        return { content: [{ type: 'text', text: JSON.stringify(structured, null, 2) }], structuredContent: structured };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return {
@@ -38,7 +41,7 @@ export function buildServer(core: KickTippClient) {
   tool('predict_matchday', 'Expected-points-optimal predictions from odds', { community: z.string(), spieltagIndex: z.number().optional() }, (a) => core.predictMatchday(a));
   tool(
     'place_bets',
-    'Submit tips. DESTRUCTIVE. dry_run defaults true.',
+    'Submit tips. DESTRUCTIVE. dry_run defaults true. Diff rows carry status ok|locked|unknown — locked/unknown bets are never submitted. After a real submit each ok row gets verified:true/false from a read-back of the saved form; trust verified, not submitted.',
     {
       community: z.string(),
       spieltagIndex: z.number().optional(),
@@ -46,7 +49,6 @@ export function buildServer(core: KickTippClient) {
         z.object({ matchId: z.number(), home: z.number(), away: z.number() }),
       ),
       dry_run: z.boolean().default(true),
-      override: z.boolean().default(false),
     },
     (a) =>
       core.placeBets({
@@ -54,7 +56,6 @@ export function buildServer(core: KickTippClient) {
         spieltagIndex: a.spieltagIndex,
         bets: a.bets,
         dryRun: a.dry_run,
-        override: a.override,
       }),
   );
   return { server, toolNames };

@@ -38,6 +38,18 @@ describe('mcp server', () => {
     expect(result.content[0].text).toBe(JSON.stringify(distribution, null, 2));
   });
 
+  it('wraps array results in an object for structuredContent (MCP spec requires a record)', async () => {
+    const communities = [{ slug: 'a', name: 'A' }];
+    const stubCore: any = { listCommunities: async () => communities };
+    const { server } = buildServer(stubCore);
+    const handler = getToolHandler(server, 'list_communities');
+    const result = await handler({}, {});
+    expect(Array.isArray(result.structuredContent)).toBe(false);
+    expect(result.structuredContent).toEqual({ items: communities });
+    // text block must serialize the SAME shape clients see in structuredContent
+    expect(result.content[0].text).toBe(JSON.stringify({ items: communities }, null, 2));
+  });
+
   it('returns a structured error response when a core method throws', async () => {
     const stubCore: any = {
       getTipDistribution: async () => {

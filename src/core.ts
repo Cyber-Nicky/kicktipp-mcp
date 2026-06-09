@@ -16,7 +16,9 @@ import type {
   Fixture,
   ScoringRules,
   Prediction,
-  Score,
+  BetDiffEntry,
+  BetDiffStatus,
+  PlaceBetsResult,
 } from './domain/types.js';
 
 export class KickTippClient {
@@ -91,18 +93,25 @@ export class KickTippClient {
     spieltagIndex?: number;
     bets: { matchId: number; home: number; away: number }[];
     dryRun: boolean;
-    override?: boolean;
-  }): Promise<{ submitted: boolean; diff: { matchId: number; from: Score | null; to: Score }[] }> {
+  }): Promise<PlaceBetsResult> {
+    const seen = new Set<number>();
+    for (const b of o.bets) {
+      if (seen.has(b.matchId)) throw new Error(`duplicate matchId in bets: ${b.matchId}`);
+      seen.add(b.matchId);
+    }
     const form = parseBetForm(await this.getHtml(this.u.tippabgabe(o.community, o.spieltagIndex)));
-    const diff = o.bets.map((b) => {
+    const diff: BetDiffEntry[] = o.bets.map((b) => {
       const m = form.matches.find((x) => x.formIndex === b.matchId);
       return {
         matchId: b.matchId,
-        from: m && m.currentHome != null ? ({ home: m.currentHome, away: m.currentAway! } as Score) : null,
+        from: m && m.currentHome != null && m.currentAway != null ? { home: m.currentHome, away: m.currentAway } : null,
         to: { home: b.home, away: b.away },
+        status: (!m ? 'unknown' : m.locked ? 'locked' : 'ok') as BetDiffStatus,
       };
     });
-    if (o.dryRun) return { submitted: false, diff };
+    if (o.dryRun) return { submitted: false, verified: null, diff };
+    const applicable = diff.filter((d) => d.status === 'ok');
+    if (!applicable.length) return { submitted: false, verified: null, diff };
     // Submit the FULL form like a browser would: echo every match's existing tip so betting on
     // one match never clears the others. Hidden fields (spieltagIndex, tippAbgegeben flags, …)
     // are replayed verbatim from form.fields.
@@ -111,13 +120,19 @@ export class KickTippClient {
       params[m.homeInputName] = m.currentHome != null ? String(m.currentHome) : '';
       params[m.awayInputName] = m.currentAway != null ? String(m.currentAway) : '';
     }
-    for (const b of o.bets) {
-      const m = form.matches.find((x) => x.formIndex === b.matchId);
-      if (!m || m.locked) continue;
-      params[m.homeInputName] = String(b.home);
-      params[m.awayInputName] = String(b.away);
+    for (const d of applicable) {
+      const m = form.matches.find((x) => x.formIndex === d.matchId)!;
+      params[m.homeInputName] = String(d.to.home);
+      params[m.awayInputName] = String(d.to.away);
     }
     await (await this.session.http()).postForm(this.u.tippabgabe(o.community, o.spieltagIndex), params);
-    return { submitted: true, diff };
+    // Read back the saved form: kicktipp answers 200 even when it drops a tip
+    // (expired deadline, rejected value), so only the stored state is trustworthy.
+    const saved = parseBetForm(await this.getHtml(this.u.tippabgabe(o.community, o.spieltagIndex)));
+    for (const d of applicable) {
+      const m = saved.matches.find((x) => x.formIndex === d.matchId);
+      d.verified = !!m && m.currentHome === d.to.home && m.currentAway === d.to.away;
+    }
+    return { submitted: true, verified: applicable.every((d) => d.verified === true), diff };
   }
 }
