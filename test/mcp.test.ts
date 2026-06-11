@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildServer } from '../src/mcp/server.js';
+import { AccountRegistry } from '../src/mcp/accounts.js';
 
 /** Reach into the SDK's registered-tool map to invoke a handler directly. */
 function getToolHandler(server: any, name: string): (args: any, extra: any) => Promise<any> {
@@ -70,6 +71,47 @@ describe('mcp server', () => {
     );
     expect(received).toEqual({ community: 'x', bets: [{ question: 'Q?', answers: ['A'] }], dryRun: true });
     expect(result.structuredContent).toEqual(out);
+  });
+
+  it('routes the account param to the matching registry client', async () => {
+    const coreA: any = { listCommunities: async () => [{ slug: 'a', name: 'A' }] };
+    const coreB: any = { listCommunities: async () => [{ slug: 'b', name: 'B' }] };
+    const reg = new AccountRegistry({
+      emails: ['a@x.de', 'b@y.de'],
+      defaultEmail: 'a@x.de',
+      makeClient: (e) => (e === 'a@x.de' ? coreA : coreB),
+    });
+    const { server } = buildServer(reg);
+    const handler = getToolHandler(server, 'list_communities');
+    const def = await handler({}, {});
+    expect(def.structuredContent).toEqual({ items: [{ slug: 'a', name: 'A' }] });   // default account
+    const other = await handler({ account: 'B@Y.de' }, {});
+    expect(other.structuredContent).toEqual({ items: [{ slug: 'b', name: 'B' }] }); // case-insensitive switch
+  });
+
+  it('returns isError listing accounts for an unknown account', async () => {
+    const reg = new AccountRegistry({ emails: ['a@x.de'], defaultEmail: 'a@x.de', makeClient: () => ({}) as any });
+    const { server } = buildServer(reg);
+    const result = await getToolHandler(server, 'list_communities')({ account: 'ghost@x.de' }, {});
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('a@x.de');
+  });
+
+  it('list_accounts reports emails with isDefault', async () => {
+    const reg = new AccountRegistry({
+      emails: ['a@x.de', 'b@y.de'],
+      defaultEmail: 'b@y.de',
+      makeClient: () => ({}) as any,
+    });
+    const { server, toolNames } = buildServer(reg);
+    expect(toolNames).toContain('list_accounts');
+    const result = await getToolHandler(server, 'list_accounts')({}, {});
+    expect(result.structuredContent).toEqual({
+      accounts: [
+        { email: 'a@x.de', isDefault: false },
+        { email: 'b@y.de', isDefault: true },
+      ],
+    });
   });
 
   it('returns a structured error response when a core method throws', async () => {
