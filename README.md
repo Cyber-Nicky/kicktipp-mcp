@@ -113,6 +113,8 @@ The server exposes the following tools. Claude Code will call `get_status` first
 | `get_tip_distribution` | `community`, `spieltagIndex?` | Crowd tip distribution (Tippverteilung) per match |
 | `predict_matchday` | `community`, `spieltagIndex?` | Expected-points-optimal predictions from odds |
 | `place_bets` | `community`, `bets[]`, `dry_run?`, `spieltagIndex?` | Submit tips. DESTRUCTIVE. `dry_run` defaults to `true`. Diff rows carry `status` (`ok`/`locked`/`unknown`); real submits are verified by a form read-back (`verified`). |
+| `get_bonus_questions` | `community` | Bonus questions (Weltmeister, group winners, …) with answer options, deadlines, and your current answers |
+| `place_bonus_bets` | `community`, `bets[]`, `dry_run?` | Submit bonus answers by question/answer text (case-insensitive). Multi-answer questions take `answers` in slot order. DESTRUCTIVE. Same `dry_run`/diff/read-back-`verified` contract as `place_bets`. |
 
 ### Example: tip distribution API
 
