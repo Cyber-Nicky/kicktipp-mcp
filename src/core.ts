@@ -6,11 +6,14 @@ import { parseDistribution } from './scrape/distribution.js';
 import { parseBetForm } from './scrape/betform.js';
 import { parseBonusForm } from './scrape/bonusform.js';
 import { parseStandings } from './scrape/standings.js';
+import { parseLeaderboardPage } from './scrape/leaderboard.js';
 import { parseSchedule } from './scrape/schedule.js';
 import { parseRules } from './scrape/rules.js';
 import { expectedStrategy } from './optimizer/strategy.js';
+import { KickTippError, AuthError } from './errors.js';
 import type {
   Community,
+  Leaderboard,
   MatchdayDistribution,
   BetFormMatch,
   Standing,
@@ -54,6 +57,33 @@ export class KickTippClient {
 
   async getStandings(o: { community: string }): Promise<Standing[]> {
     return parseStandings(await this.getHtml(this.u.tabellen(o.community)));
+  }
+
+  async getLeaderboard(o: { community: string; spieltagIndex?: number }): Promise<Leaderboard> {
+    const http = await this.session.http();
+    const base =
+      o.spieltagIndex != null
+        ? this.u.tippuebersicht(o.community, o.spieltagIndex)
+        : this.u.gesamtuebersicht(o.community);
+    const fetchPage = async (url: string) => {
+      const res = await http.get(url);
+      if (res.status === 404) throw new KickTippError(`community not found: ${o.community}`);
+      if (res.finalUrl.includes('/profil/login')) throw new AuthError('not logged in: the leaderboard requires an authenticated session');
+      return parseLeaderboardPage(res.html);
+    };
+    const first = await fetchPage(base);
+    // kicktipp answers 200 for an out-of-range spieltagIndex and silently serves
+    // the nearest real matchday — surface that as an error instead.
+    if (o.spieltagIndex != null && first.spieltagIndex != null && first.spieltagIndex !== o.spieltagIndex)
+      throw new KickTippError(`matchday ${o.spieltagIndex} out of range: kicktipp serves matchday ${first.spieltagIndex} instead`);
+    const items = [...first.entries];
+    let pageCount = first.pageCount;
+    for (let page = 2; page <= pageCount; page++) {
+      const p = await fetchPage(`${base}${base.includes('?') ? '&' : '?'}seite=${page}`);
+      pageCount = Math.max(pageCount, p.pageCount); // pagers may only link a few pages ahead
+      items.push(...p.entries);
+    }
+    return { community: o.community, spieltagIndex: o.spieltagIndex ?? null, items };
   }
 
   async getRules(o: { community: string }): Promise<ScoringRules> {

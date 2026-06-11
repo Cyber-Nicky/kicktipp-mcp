@@ -9,6 +9,7 @@ export function urls(base = 'https://www.kicktipp.de') {
     tippabgabe: (slug: string, md?: number) => `${b}/${slug}/tippabgabe${q(md, 'spieltagIndex')}`,
     bonusabgabe: (slug: string) => `${b}/${slug}/tippabgabe?bonus=true`,
     tippuebersicht: (slug: string, md?: number) => `${b}/${slug}/tippuebersicht${q(md, 'spieltagIndex')}`,
+    gesamtuebersicht: (slug: string) => `${b}/${slug}/gesamtuebersicht`,
     matchDetail: (slug: string, tippspielId: number) => `${b}/${slug}/tippuebersicht/spiel?tippspielId=${tippspielId}`,
     tabellen: (slug: string) => `${b}/${slug}/tabellen`,
     tippspielplan: (slug: string, md?: number) => `${b}/${slug}/tippspielplan${q(md, 'spieltagIndex')}`,

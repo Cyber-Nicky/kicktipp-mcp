@@ -42,6 +42,9 @@ export interface MatchdayDistribution {
   matches: TipDistribution[];
 }
 export interface Standing { rank: number; team: string; played: number; goalsFor: number; goalsAgainst: number; points: number; }
+/** One participant row of the betting-pool leaderboard. `name` is the kicktipp display name verbatim. */
+export interface LeaderboardEntry { rank: number; name: string; points: number; bonusPoints: number; }
+export interface Leaderboard { community: string; spieltagIndex: number | null; items: LeaderboardEntry[]; }
 export interface Fixture { matchId: number; home: string; away: string; kickoff: string | null; homeGoals: number | null; awayGoals: number | null; }
 export interface ScoringRules { exact: number; goalDiff: number; tendency: number; }
 export interface Profile { email: string; defaultCommunity?: string; }

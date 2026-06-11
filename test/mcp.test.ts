@@ -39,6 +39,17 @@ describe('mcp server', () => {
     expect(result.content[0].text).toBe(JSON.stringify(distribution, null, 2));
   });
 
+  it('registers get_leaderboard and routes it to the core method', async () => {
+    const leaderboard = { community: 'x', spieltagIndex: null, items: [{ rank: 1, name: 'A', points: 4, bonusPoints: 0 }] };
+    let received: any;
+    const stubCore: any = { getLeaderboard: async (o: any) => { received = o; return leaderboard; } };
+    const { server, toolNames } = buildServer(stubCore);
+    expect(toolNames).toContain('get_leaderboard');
+    const result = await getToolHandler(server, 'get_leaderboard')({ community: 'x' }, {});
+    expect(received).toMatchObject({ community: 'x' });
+    expect(result.structuredContent).toEqual(leaderboard);
+  });
+
   it('wraps array results in an object for structuredContent (MCP spec requires a record)', async () => {
     const communities = [{ slug: 'a', name: 'A' }];
     const stubCore: any = { listCommunities: async () => communities };

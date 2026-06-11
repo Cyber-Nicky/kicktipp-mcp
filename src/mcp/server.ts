@@ -51,6 +51,12 @@ export function buildServer(coreOrRegistry: KickTippClient | AccountRegistry) {
   tool('get_schedule', 'Fixtures + results', { community: z.string(), spieltagIndex: z.number().optional() }, (core, a) => core.getSchedule(a));
   tool('get_standings', 'Football league table', { community: z.string() }, (core, a) => core.getStandings(a));
   tool('get_rules', 'Scoring rules', { community: z.string() }, (core, a) => core.getRules(a));
+  tool(
+    'get_leaderboard',
+    'Betting-pool leaderboard (tipper standings, not the football table). Omit spieltagIndex for overall totals; set it for that matchday\'s round points',
+    { community: z.string(), spieltagIndex: z.number().optional() },
+    (core, a) => core.getLeaderboard(a),
+  );
   tool('get_tip_distribution', 'Crowd tip distribution (Tippverteilung) per match', { community: z.string(), spieltagIndex: z.number().optional() }, (core, a) => core.getTipDistribution(a));
   tool('predict_matchday', 'Expected-points-optimal predictions from odds', { community: z.string(), spieltagIndex: z.number().optional() }, (core, a) => core.predictMatchday(a));
   tool(
