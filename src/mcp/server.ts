@@ -58,5 +58,21 @@ export function buildServer(core: KickTippClient) {
         dryRun: a.dry_run,
       }),
   );
+  tool(
+    'get_bonus_questions',
+    'Bonus questions (Weltmeister, group winners, …) with options, deadlines, and your current answers',
+    { community: z.string() },
+    (a) => core.getBonusQuestions(a),
+  );
+  tool(
+    'place_bonus_bets',
+    'Submit bonus answers by question/answer text (case-insensitive exact match; get_bonus_questions lists valid texts). Multi-answer questions take answers in slot order. DESTRUCTIVE. dry_run defaults true. Diff rows carry status ok|locked|unknown; after a real submit each ok row gets verified:true/false from a read-back — trust verified, not submitted.',
+    {
+      community: z.string(),
+      bets: z.array(z.object({ question: z.string(), answers: z.array(z.string()).min(1) })),
+      dry_run: z.boolean().default(true),
+    },
+    (a) => core.placeBonusBets({ community: a.community, bets: a.bets, dryRun: a.dry_run }),
+  );
   return { server, toolNames };
 }

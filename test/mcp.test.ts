@@ -50,6 +50,28 @@ describe('mcp server', () => {
     expect(result.content[0].text).toBe(JSON.stringify({ items: communities }, null, 2));
   });
 
+  it('registers bonus tools and wraps the question list in an object', async () => {
+    const questions = [{ questionId: 1, text: 'Wer wird Weltmeister?', deadline: null, locked: false, slots: [] }];
+    const stubCore: any = { getBonusQuestions: async () => questions };
+    const { server, toolNames } = buildServer(stubCore);
+    expect(toolNames).toContain('get_bonus_questions');
+    expect(toolNames).toContain('place_bonus_bets');
+    const result = await getToolHandler(server, 'get_bonus_questions')({ community: 'x' }, {});
+    expect(result.structuredContent).toEqual({ items: questions }); // MCP: no bare arrays
+  });
+
+  it('place_bonus_bets maps dry_run to dryRun', async () => {
+    let received: any;
+    const out = { submitted: false, verified: null, diff: [] };
+    const stubCore: any = { placeBonusBets: async (o: any) => { received = o; return out; } };
+    const { server } = buildServer(stubCore);
+    const result = await getToolHandler(server, 'place_bonus_bets')(
+      { community: 'x', bets: [{ question: 'Q?', answers: ['A'] }], dry_run: true }, {},
+    );
+    expect(received).toEqual({ community: 'x', bets: [{ question: 'Q?', answers: ['A'] }], dryRun: true });
+    expect(result.structuredContent).toEqual(out);
+  });
+
   it('returns a structured error response when a core method throws', async () => {
     const stubCore: any = {
       getTipDistribution: async () => {
