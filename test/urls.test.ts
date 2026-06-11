@@ -12,4 +12,7 @@ describe('urls', () => {
     expect(u.tippuebersicht('x', 5)).toBe('https://www.kicktipp.de/x/tippuebersicht?spieltagIndex=5');
     expect(u.matchDetail('x', 99)).toBe('https://www.kicktipp.de/x/tippuebersicht/spiel?tippspielId=99');
   });
+  it('bonusabgabe appends bonus=true', () => {
+    expect(u.bonusabgabe('runde')).toBe('https://www.kicktipp.de/runde/tippabgabe?bonus=true');
+  });
 });
