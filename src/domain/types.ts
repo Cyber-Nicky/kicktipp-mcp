@@ -67,6 +67,45 @@ export interface PlaceBetsResult {
   diff: BetDiffEntry[];
 }
 
+// ── Bonus questions (tippabgabe?bonus=true) ──────────────────────────────────
+
+export interface BonusOption { id: number; label: string; }
+/**
+ * One answer dropdown of a bonus question. Multi-answer questions
+ * ("Wer erreicht das Halbfinale?") have several slots. Option IDs are
+ * PER-SLOT: the same team has a different id in each slot's option list,
+ * so an answer must always be resolved against its own slot's options.
+ */
+export interface BonusSlot {
+  slotId: number;
+  inputName: string;
+  options: BonusOption[];
+  currentId: number | null;
+  currentLabel: string | null;
+}
+export interface BonusQuestion {
+  questionId: number;
+  text: string;
+  deadline: string | null;
+  locked: boolean;
+  slots: BonusSlot[];
+}
+export interface BonusBetDiffEntry {
+  question: string;
+  /** Current answer labels for the affected slots; null when nothing stored. */
+  from: string[] | null;
+  to: string[];
+  status: BetDiffStatus;
+  /** Read-back result after a real submit ('ok' rows only); absent on dry-run. */
+  verified?: boolean;
+}
+export interface PlaceBonusBetsResult {
+  submitted: boolean;
+  /** null on dry-run or when nothing was applicable; otherwise true iff every applied answer was read back from the saved form. */
+  verified: boolean | null;
+  diff: BonusBetDiffEntry[];
+}
+
 // ── HTTP contract ─────────────────────────────────────────────────────────────
 
 export interface HttpResponse { status: number; finalUrl: string; html: string; }
