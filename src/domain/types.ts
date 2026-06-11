@@ -73,8 +73,9 @@ export interface BonusOption { id: number; label: string; }
 /**
  * One answer dropdown of a bonus question. Multi-answer questions
  * ("Wer erreicht das Halbfinale?") have several slots. Option IDs are
- * PER-SLOT: the same team has a different id in each slot's option list,
- * so an answer must always be resolved against its own slot's options.
+ * PER-QUESTION: identical across a question's slots, but the same team has
+ * a DIFFERENT id in every other question — so an answer must always be
+ * resolved against its own slot's option list, never globally.
  */
 export interface BonusSlot {
   slotId: number;
