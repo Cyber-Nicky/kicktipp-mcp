@@ -115,6 +115,19 @@ The server exposes the following tools. Claude Code will call `get_status` first
 | `place_bets` | `community`, `bets[]`, `dry_run?`, `spieltagIndex?` | Submit tips. DESTRUCTIVE. `dry_run` defaults to `true`. Diff rows carry `status` (`ok`/`locked`/`unknown`); real submits are verified by a form read-back (`verified`). |
 | `get_bonus_questions` | `community` | Bonus questions (Weltmeister, group winners, …) with answer options, deadlines, and your current answers |
 | `place_bonus_bets` | `community`, `bets[]`, `dry_run?` | Submit bonus answers by question/answer text (case-insensitive). Multi-answer questions take `answers` in slot order. DESTRUCTIVE. Same `dry_run`/diff/read-back-`verified` contract as `place_bets`. |
+| `list_accounts` | — | List configured accounts. Every other tool takes an optional `account` (email) to act as that account; omitted = default. |
+
+### Multiple accounts
+
+The server serves every account you have logged in locally. Add one:
+
+```bash
+ktipp login   # interactive; stores only the session cookie (Keychain) + profile
+```
+
+Then reconnect the MCP server (e.g. `/mcp` in Claude Code). `list_accounts`
+shows all accounts; pass `account: "email"` on any tool to act as that
+account. `KICKTIPP_EMAIL` (if set) picks the default account.
 
 ### Example: tip distribution API
 
